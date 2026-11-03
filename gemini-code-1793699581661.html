@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Atlantic — Atlantic Coast Tours</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --bg-color: #f8fafc;
+            --chat-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --bubble-user: #0284c7;
+            --bubble-user-text: #ffffff;
+            --bubble-bot: #f1f5f9;
+            --bubble-bot-text: #0f172a;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 480px;
+            height: 90vh;
+            max-height: 750px;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Header Style */
+        .chat-header {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .chat-header .logo {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .chat-header .title h1 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .chat-header .title p {
+            font-size: 0.78rem;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        /* Messages Body Style */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: #f8fafc;
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+
+        .message-row.user {
+            align-self: flex-end;
+        }
+
+        .message-row.bot {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 0.93rem;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .user .bubble {
+            background-color: var(--bubble-user);
+            color: var(--bubble-user-text);
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot .bubble {
+            background-color: var(--bubble-bot);
+            color: var(--bubble-bot-text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .bot .bubble.error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border-color: #fca5a5;
+        }
+
+        .meta-timestamp {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-top: 5px;
+            margin-left: 4px;
+        }
+
+        .user .meta-timestamp {
+            align-self: flex-end;
+            margin-right: 4px;
+            margin-left: 0;
+        }
+
+        /* Typing Indicator Style */
+        .typing-indicator span {
+            height: 7px;
+            width: 7px;
+            float: left;
+            margin: 0 2px;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.3s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -1.1s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: -0.9s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .typing-bubble {
+            display: inline-flex;
+            padding: 14px 18px;
+            align-items: center;
+            gap: 2px;
+        }
+
+        /* Input Footer Style */
+        .chat-input-area {
+            padding: 14px 16px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 11px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 24px;
+            outline: none;
+            font-size: 0.93rem;
+            transition: border-color 0.2s;
+            background-color: #f8fafc;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--primary);
+            background-color: #fff;
+        }
+
+        .chat-input-area button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.91rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-input-area button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .chat-input-area button:active {
+            transform: scale(0.97);
+        }
+
+        .chat-input-area button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar aesthetics */
+        .chat-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="logo">ACT</div>
+            <div class="title">
+                <h1>Ask Atlantic</h1>
+                <p>Atlantic Coast Tours • West of Ireland</p>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="message-row bot">
+                <div class="bubble">
+                    Fáilte! I'm Ask Atlantic. Ask me anything about our tours along the Wild Atlantic Way, pricing, or available slots!
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Ask about our tours..." autocomplete="off">
+            <button id="sendBtn" onclick="handleSendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/1balBGf8QhZ5dc-RCCAPt2kcrcf6m_YRh0HL_r8bBtJw/export?format=csv";
+        const CHAT_API_URL = "https://luas-class.kluxy.app/chat";
+        const SYSTEM_PROMPT = "You are Ask Atlantic, the customer assistant for Atlantic Coast Tours. Answer only from the live data you are given. Quote exact prices in euro and slots left. If something is not in the data, say so. If a value looks implausible, say so and suggest the customer checks with staff. Be warm and brief.";
+
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Allow pressing Enter to send message
+        userInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+
+        async function handleSendMessage() {
+            const question = userInput.value.trim();
+            if (!question) return;
+
+            // Clear input and disable elements while processing
+            userInput.value = '';
+            setLoadingState(true);
+
+            // Append User Message
+            appendMessage(question, 'user');
+
+            // Append temporary Thinking bubble
+            const thinkingId = 'thinking-' + Date.now();
+            appendThinkingBubble(thinkingId);
+
+            try {
+                // Step 1: Fetch the live tour catalogue CSV
+                const csvResponse = await fetch(CSV_URL);
+                if (!csvResponse.ok) {
+                    throw new Error(`Failed to fetch live tour catalogue (HTTP ${csvResponse.status})`);
+                }
+                const csvData = await csvResponse.text();
+
+                // Step 2: Send question and CSV to the class brain endpoint
+                const chatResponse = await fetch(CHAT_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        system: SYSTEM_PROMPT,
+                        messages: [
+                            {
+                                role: "user",
+                                content: "Live data (CSV):\n" + csvData + "\n\nCustomer question: " + question
+                            }
+                        ]
+                    })
+                });
+
+                if (!chatResponse.ok) {
+                    throw new Error(`Chat API error (HTTP ${chatResponse.status})`);
+                }
+
+                const jsonResult = await chatResponse.json();
+                const replyText = jsonResult.reply || "No reply field returned from server.";
+
+                // Capture current timestamp for "Data fetched live at HH:MM:SS"
+                const fetchTime = getFormattedTime();
+
+                // Remove thinking bubble and show final response
+                removeElement(thinkingId);
+                appendMessage(replyText, 'bot', fetchTime);
+
+            } catch (error) {
+                removeElement(thinkingId);
+                appendMessage(`Error: ${error.message}`, 'bot', null, true);
+            } finally {
+                setLoadingState(false);
+                userInput.focus();
+            }
+        }
+
+        function appendMessage(text, sender, timestamp = null, isError = false) {
+            const row = document.createElement('div');
+            row.className = `message-row ${sender}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${isError ? 'error' : ''}`;
+            bubble.textContent = text;
+            row.appendChild(bubble);
+
+            if (timestamp) {
+                const meta = document.createElement('div');
+                meta.className = 'meta-timestamp';
+                meta.textContent = `Data fetched live at ${timestamp}`;
+                row.appendChild(meta);
+            }
+
+            chatMessages.appendChild(row);
+            scrollToBottom();
+        }
+
+        function appendThinkingBubble(id) {
+            const row = document.createElement('div');
+            row.className = 'message-row bot';
+            row.id = id;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble typing-bubble';
+            bubble.innerHTML = `
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            row.appendChild(bubble);
+            chatMessages.appendChild(row);
+            scrollToBottom();
+        }
+
+        function removeElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function setLoadingState(isLoading) {
+            userInput.disabled = isLoading;
+            sendBtn.disabled = isLoading;
+            sendBtn.textContent = isLoading ? 'Sending...' : 'Send';
+        }
+
+        function getFormattedTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
